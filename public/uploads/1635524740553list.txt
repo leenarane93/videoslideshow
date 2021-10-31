@@ -1,0 +1,2 @@
+file C:\Projects\VMS Revamp\videoshow-master\videoslideshow\examples/../test/fixtures/video.mp4
+file C:\Projects\VMS Revamp\videoshow-master\videoslideshow\examples/../test/fixtures/AVI_Media.avi
