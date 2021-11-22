@@ -199,7 +199,7 @@ function gifConvert(path, destPath, fname, duration) {
         const loopCount = Math.round(duration / gifLen);
         console.log(loopCount);
         exec(
-          `ffmpeg -stream_loop ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
+          `ffmpeg -stream_loop ${loopCount} -t ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
           (error, stdout, stderr) => {
             if (error) {
               console.log(`error: ${error.message}`);
