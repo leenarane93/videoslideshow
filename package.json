@@ -41,8 +41,8 @@
     "ass-stringify": "^0.1.1",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "fluent-ffmpeg": "^2.0.0",
     "fw": "^0.1.2",
+    "get-video-duration": "^4.0.0",
     "lil-uuid": "^0.1.0",
     "lodash.merge": "^4.6.2",
     "multer": "^1.4.3",
@@ -51,7 +51,11 @@
     "yargs": "^3.5.4"
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^1.2.0",
+    "@types/cors": "^2.8.12",
     "chai": "^1.10.0",
+    "fluent-ffmpeg": "^2.1.2",
     "mocha": "^6.2.0",
     "rimraf": "^2.2.8"
   }
