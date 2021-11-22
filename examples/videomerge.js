@@ -23,6 +23,8 @@ var dir = "public";
 var subDirectory = "public/uploads";
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
 const ffprobe = require("@ffprobe-installer/ffprobe");
+const { getVideoDurationInSeconds } = require('get-video-duration')
+
 
 const ffmpeg = require("fluent-ffmpeg")()
   .setFfprobePath(ffprobe.path)
@@ -191,31 +193,38 @@ function gifConvert(path, destPath, fname, duration) {
     .output(destPath + "GIF.mp4")
     .on("end", () => {
       console.log("Ended");
+      getVideoDurationInSeconds(
+        destPath + "GIF.mp4"
+      ).then((gifLen) => {
+        const loopCount = Math.round(duration / gifLen);
+        console.log(loopCount);
+        exec(
+          `ffmpeg -stream_loop ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
+          (error, stdout, stderr) => {
+            if (error) {
+              console.log(`error: ${error.message}`);
+              return;
+            } else {
+              console.log("videos are successfully merged");
+              // res.download(outputFilePath, (err) => {
+              //   if (err) throw err;
+    
+              //   req.files.forEach((file) => {
+              //     fs.unlinkSync(file.path);
+              //   });
+    
+              //   fs.unlinkSync(listFilePath);
+              //   fs.unlinkSync(outputFilePath);
+              // });
+            }
+          }
+        );
+      })
     })
     .on("error", (e) => console.log(e))
     .run();
   
-    exec(
-      `ffmpeg -stream_loop ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
-      (error, stdout, stderr) => {
-        if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-        } else {
-          console.log("videos are successfully merged");
-          // res.download(outputFilePath, (err) => {
-          //   if (err) throw err;
-
-          //   req.files.forEach((file) => {
-          //     fs.unlinkSync(file.path);
-          //   });
-
-          //   fs.unlinkSync(listFilePath);
-          //   fs.unlinkSync(outputFilePath);
-          // });
-        }
-      }
-    );
+    
 }
 
 app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
