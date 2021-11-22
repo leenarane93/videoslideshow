@@ -146,7 +146,7 @@ app.post("/imageToVideo", (req, res) => {
           console.log("Video created in:", output);
         });
     } else if (ele.type == "gif") {
-      //gifConvert(ele.path, playlistSavePath + plName, ele.fname);
+      gifConvert(ele.path, playlistSavePath + plName + "\\", ele.fname, ele.loop);
     }
     res.send("<h1>Action Completed</h1>");
   });
@@ -194,6 +194,28 @@ function gifConvert(path, destPath, fname, duration) {
     })
     .on("error", (e) => console.log(e))
     .run();
+  
+    exec(
+      `ffmpeg -stream_loop ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+        } else {
+          console.log("videos are successfully merged");
+          // res.download(outputFilePath, (err) => {
+          //   if (err) throw err;
+
+          //   req.files.forEach((file) => {
+          //     fs.unlinkSync(file.path);
+          //   });
+
+          //   fs.unlinkSync(listFilePath);
+          //   fs.unlinkSync(outputFilePath);
+          // });
+        }
+      }
+    );
 }
 
 app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
