@@ -23,8 +23,7 @@ var dir = "public";
 var subDirectory = "public/uploads";
 const ffmpegInstaller = require("@ffmpeg-installer/ffmpeg");
 const ffprobe = require("@ffprobe-installer/ffprobe");
-const { getVideoDurationInSeconds } = require('get-video-duration')
-
+const { getVideoDurationInSeconds } = require("get-video-duration");
 
 const ffmpeg = require("fluent-ffmpeg")()
   .setFfprobePath(ffprobe.path)
@@ -135,9 +134,10 @@ app.post("/imageToVideo", (req, res) => {
   var plName = req.body[0].plid;
   req.body.forEach((ele) => {
     if (ele.type == "image") {
+      var fname = ele.fname;
       videoshow(images, options)
         .audio()
-        .save(playlistSavePath + plName + "\\" + "ImageVideo.mp4")
+        .save(playlistSavePath + plName + "\\" + fname + ".mp4")
         .on("start", function (command) {
           console.log("ffmpeg process started:", command);
         })
@@ -146,11 +146,16 @@ app.post("/imageToVideo", (req, res) => {
         })
         .on("end", function (output) {
           console.log("Video created in:", output);
+          res.send("Action Completed");
         });
     } else if (ele.type == "gif") {
-      gifConvert(ele.path, playlistSavePath + plName + "\\", ele.fname, ele.loop);
+      gifConvert(
+        ele.path,
+        playlistSavePath + plName + "\\",
+        ele.fname,
+        ele.loop
+      );
     }
-    res.send("<h1>Action Completed</h1>");
   });
 });
 app.get("/", (req, res) => {
@@ -190,50 +195,99 @@ function gifConvert(path, destPath, fname, duration) {
       "-filter:v crop='floor(in_w/2)*2:floor(in_h/2)*2'",
     ])
     .noAudio()
-    .output(destPath + "GIF.mp4")
+    .output(destPath + fname + "_Out.mp4")
     .on("end", () => {
       console.log("Ended");
-      getVideoDurationInSeconds(
-        destPath + "GIF.mp4"
-      ).then((gifLen) => {
-        const loopCount = Math.round(duration / gifLen);
-        console.log(loopCount);
-        exec(
-          `ffmpeg -stream_loop ${loopCount} -t ${duration} -i ${destPath + "GIF.mp4"} -c copy ${destPath + "GIFoutput.mp4"}`,
-          (error, stdout, stderr) => {
-            if (error) {
-              console.log(`error: ${error.message}`);
-              return;
-            } else {
-              console.log("videos are successfully merged");
-              // res.download(outputFilePath, (err) => {
-              //   if (err) throw err;
-    
-              //   req.files.forEach((file) => {
-              //     fs.unlinkSync(file.path);
-              //   });
-    
-              //   fs.unlinkSync(listFilePath);
-              //   fs.unlinkSync(outputFilePath);
-              // });
+      getVideoDurationInSeconds(destPath + fname + "_Out.mp4").then(
+        (gifLen) => {
+          const loopCount = Math.round(duration / gifLen);
+          console.log(loopCount);
+          exec(
+            `ffmpeg -stream_loop ${loopCount} -t ${duration} -i ${
+              destPath + fname + "_Out.mp4"
+            } -c copy ${destPath + fname + ".mp4"}`,
+            (error, stdout, stderr) => {
+              if (error) {
+                console.log(`error: ${error.message}`);
+                return;
+              } else {
+                console.log("videos are successfully merged");
+                // res.download(outputFilePath, (err) => {
+                //   if (err) throw err;
+
+                //   req.files.forEach((file) => {
+                //     fs.unlinkSync(file.path);
+                //   });
+
+                //   fs.unlinkSync(listFilePath);
+                //   fs.unlinkSync(outputFilePath);
+                // });
+              }
             }
-          }
-        );
-      })
+          );
+        }
+      );
     })
     .on("error", (e) => console.log(e))
     .run();
-  
-    
 }
 
-app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
+// app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
+//   list = "";
+//   if (req.files) {
+//     req.files.forEach((file) => {
+//       list += `file ${file.filename}`;
+//       list += "\n";
+//     });
+
+//     var writeStream = fs.createWriteStream(listFilePath);
+
+//     writeStream.write(list);
+
+//     writeStream.end();
+
+//     exec(
+//       `ffmpeg -safe 0 -f concat -i ${listFilePath} -c copy ${outputFilePath}`,
+//       (error, stdout, stderr) => {
+//         if (error) {
+//           console.log(`error: ${error.message}`);
+//           return;
+//         } else {
+//           console.log("videos are successfully merged");
+//           res.download(outputFilePath, (err) => {
+//             if (err) {
+//               console.log(err);
+//             }
+
+//             req.files.forEach((file) => {
+//               fs.unlinkSync(file.path);
+//             });
+
+//             fs.unlinkSync(listFilePath);
+//             fs.unlinkSync(outputFilePath);
+//           });
+//         }
+//       }
+//     );
+//   }
+//   res.send("<h1>Action Completed</h1>");
+// });
+
+app.post("/videoMerge", (req, res) => {
   list = "";
-  if (req.files) {
-    req.files.forEach((file) => {
-      list += `file ${file.filename}`;
+
+  fs.readdir(req.body.path, function (err, files) {
+    //handling error
+    if (err) {
+      return console.log("Unable to scan directory: " + err);
+    }
+    //listing all files using forEach
+    files.forEach(function (file) {
+      list += `file ${req.body.path}\\${file}`;
       list += "\n";
     });
+    listFilePath = "C:\\Images\\" + Date.now() + "list.txt";
+    console.log(listFilePath);
 
     var writeStream = fs.createWriteStream(listFilePath);
 
@@ -250,9 +304,12 @@ app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
         } else {
           console.log("videos are successfully merged");
           res.download(outputFilePath, (err) => {
-            if (err) throw err;
+            if (err) {
+              console.log(err);
+            }
 
-            req.files.forEach((file) => {
+            files.forEach(function (file) {
+              console.log("Each File : " + file);
               fs.unlinkSync(file.path);
             });
 
@@ -262,8 +319,8 @@ app.post("/videoMerge", upload.array("files", 1000), (req, res) => {
         }
       }
     );
-  }
-  res.send("<h1>Action Completed</h1>");
+    res.send("<h1>Action Completed</h1>");
+  });
 });
 
 app.listen(PORT, () => {
